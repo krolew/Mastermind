@@ -3,11 +3,14 @@ module TextContent
     def startInstruction
         puts "\n\nComputer set 'code' now try to break the code"
     end
-    def guessInformation
-        puts "\nType in four numbers (1-6) to guess code"
+    def guessInformation(turn)
+        puts "\nTurn #{turn} \nType in four numbers (1-6) to guess code"
     end
     def quessCorectness
         puts "\nYour guess should only be 4 digits between 1-6"
+    end
+    def gameOver(local)
+        puts "\nGame Over:C That was the code:".red + " #{local}"
     end
 end
 
@@ -29,6 +32,7 @@ class Game
     def initialize
         @computer = Computer.new
         @player = Player.new
+        @turn = 1
     end
 
     def play
@@ -37,12 +41,29 @@ class Game
     end
 
     def quessingCode
-        while(@computer.code != @player.code)
-            guessInformation
+        while(@turn != 13 || checkWinningArray)
+            local = Marshal.load(Marshal.dump(@computer.code))
+            guessInformation(@turn)
             @player.code = gets.chomp
             checkPlayerGueesCorrectness
             changePlayerCodeToArray
+            checkPlayerGuess
+            printColors
+            checkWins(local)
+            @computer.code = local
         end
+    end
+
+    def printColors
+        print "Clues:"
+        @computer.code.shuffle.each do |el|
+            if(el == "x")
+                print " ● ".green
+            elsif(el == "o")
+                print " ● ".red
+            end
+        end
+        print "\n"
     end
 
     def checkPlayerGueesCorrectness
@@ -55,10 +76,50 @@ class Game
     def changePlayerCodeToArray
         @player.code = @player.code.split("").map { |num| num.to_i}
     end
+
+    def checkPlayerGuess
+        for i in 0..@computer.code.length - 1
+            for j in 0..@player.code.length - 1
+                if(@computer.code[i] == @player.code[j] && (1..6) === @computer.code[i].to_i)
+                    if(i == j)
+                        @computer.code[i] = "x"
+                        @player.code[j] = "x"
+                        break
+                    else
+                        if(@computer.code[j] == @player.code[j] )
+                            @computer.code[j] = "x"
+                            @player.code[j] = "x"
+                        elsif(@computer.code[i] == @player.code[i])
+                            @computer.code[i] == "x"
+                            @player.code[i] == "x"
+                        else
+                            @computer.code[i] = "o"
+                            @player.code[j] = "o"
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    def checkWins(local)
+        @turn += 1
+        if(checkWinningArray)
+            @turn = 13
+            puts "\nCongratulations you won!!! :)"
+        elsif(!checkWinningArray && @turn == 13)
+            gameOver(local)
+        end
+    end
+
+    def checkWinningArray
+        @computer.code.all? { |digit| digit == "x"}
+    end
 end
 
 class Player
     attr_accessor :code
+
     def initialize
         @code = []
     end
@@ -66,6 +127,7 @@ end
 
 class Computer
     attr_accessor :code
+
     def initialize
         @code = self.setCode
     end
@@ -79,4 +141,4 @@ class Computer
     end
 end
 
- Game.new.play
+Game.new.play

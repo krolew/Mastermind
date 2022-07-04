@@ -1,1 +1,1 @@
-elf.quessingCode
+checkPlayerGueesCorrectness
