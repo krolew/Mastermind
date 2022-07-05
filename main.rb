@@ -1,7 +1,7 @@
 # MasterMind
 module TextContent
     def startInstruction
-        puts "\n\nComputer set 'code' now try to break the code"
+        puts "\n\nComputer set 'code' now try to break the code. \nEnter 1 to be the code Maker or 2 to be code breaker "
     end
     def guessInformation(turn)
         puts "\nTurn #{turn} \nType in four numbers (1-6) to guess code"
@@ -11,6 +11,10 @@ module TextContent
     end
     def gameOver(local)
         puts "\nGame Over:C That was the code:".red + " #{local}"
+    end
+    def game_mode_info
+        puts "Enter 1 to be the code Maker or 2 to be code breaker"
+
     end
 end
 
@@ -37,10 +41,35 @@ class Game
 
     def play
         startInstruction
-        quessingCode
+        game_mode = game_selection
+        if game_mode == "1"
+            code_maker
+        end
+        if game_mode == "2"
+            code_breaker
+        end
     end
 
-    def quessingCode
+    def game_selection
+        gameMode = gets.chomp
+        until !!(gameMode=~ /^[1-2]{1}$/)
+            game_mode_info
+            gameMode = gets.chomp
+        end
+        gameMode
+    end
+
+    def code_maker
+        sets = []
+
+    end
+
+
+
+    def code_breaker
+        guessInformation(@turn)
+        @player.code = gets.chomp
+        checkPlayerGueesCorrectness
         while(@turn != 13 || checkWinningArray)
             local = Marshal.load(Marshal.dump(@computer.code))
             guessInformation(@turn)
