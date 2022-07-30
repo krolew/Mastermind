@@ -1,20 +1,25 @@
 # MasterMind
 module TextContent
     def startInstruction
-        puts "\n\nComputer set 'code' now try to break the code. \nEnter 1 to be the code Maker or 2 to be code breaker "
+        puts "\n\nEnter 1 to be the code Maker or 2 to be code breaker "
     end
     def guessInformation(turn)
         puts "\nTurn #{turn} \nType in four numbers (1-6) to guess code"
     end
     def quessCorectness
-        puts "\nYour guess should only be 4 digits between 1-6"
+        puts "\nYour code should only be 4 digits between 1-6"
     end
     def gameOver(local)
         puts "\nGame Over:C That was the code:".red + " #{local}"
     end
     def game_mode_info
         puts "Enter 1 to be the code Maker or 2 to be code breaker"
-
+    end
+    def code_breaker_start_instruction
+        puts "\n\nComputer has set a code try to brake it."
+    end
+    def code_maker_start_instruction
+        puts"Please enter 4-digit code for the computer to break."
     end
 end
 
@@ -60,16 +65,120 @@ class Game
     end
 
     def code_maker
-        sets = []
+        code_maker_start_instruction
+        @player.code = gets.chomp
+        checkPlayerGueesCorrectness
+        changePlayerCodeToArray
+        allCombination = generate_all_combinations
+        while(@turn != 13)
+                local = Marshal.load(Marshal.dump(@player.code))
+                allCombinationLocal = Marshal.load(Marshal.dump(allCombination))
+                @computer.code = playComputerGuess(allCombinationLocal)
+                localComputer = Marshal.load(Marshal.dump(@computer.code))
+                checkPlayerGuess
+                showComputerCode(localComputer)
+                printColors
+                sleep 1
+                codeOfXandO = quessToArray
+                checkWins(local)
+                @player.code = local
+                @computer.code = localComputer
+                removeMismatchedGuess(allCombination, localComputer)
+                allCombination = compareAndDelete(allCombination, allCombinationLocal, codeOfXandO)
+        end
+    end
+
+    def playComputerGuess(allCombinationLocal)
+        # Inital guess
+        arr = [[1,1,2,2],[1,1,3,3],[1,1,4,4],[1,1,5,5],[1,1,6,6],[2,2,3,3],[2,2,4,4],[2,2,5,5],[2,2,6,6],[3,3,4,4],[3,3,5,5],[3,3,6,6],[4,4,5,5],[4,4,6,6],[5,5,6,6]]
+        rand_inital_guess = arr[rand(0..arr.length-1)]
+        if @turn == 1
+            rand_inital_guess
+        else
+            allCombinationLocal[rand(0..allCombinationLocal.length-1)]
+        end
+    end
+
+    def showComputerCode(localComputer)
+        puts "\n\nComputer turn #{@turn}"
+        puts "Code: #{localComputer}"
 
     end
 
+    def compareAndDelete(allCombination, allCombinationLocal, codeOfXandO)
+        allCombinationLocal = Marshal.load(Marshal.dump(allCombinationLocal))
+        goodArray = []
+        allCombination.each_with_index do |sub_array, index|
+            arr = []
+            sub_array.each do |el|
+                if(el == "x")
+                    arr.push("x")
+                elsif(el == "o")
+                    arr.push("o")
+                end
+            end
 
+            if arr == codeOfXandO
+                goodArray.push(allCombinationLocal[index])
+            end
+        end
+        goodArray
 
+    end
+
+    def removeMismatchedGuess(allCombination, localComputer)
+        allCombination.each do |sub_array|
+            localDump = Marshal.load(Marshal.dump(localComputer))
+            for i in 0..sub_array.length - 1
+                for j in 0..localComputer.length - 1
+                    if(sub_array[i] == localComputer[j] && (1..6) === sub_array[i].to_i)
+                        if(i == j)
+                            sub_array[i] = "x"
+                            localComputer[j] = "x"
+                            break
+                        else
+                            if(sub_array[j] == localComputer[j] )
+                                sub_array[j] = "x"
+                                localComputer[j] = "x"
+                            elsif(sub_array[i] == localComputer[i])
+                                sub_array[i] == "x"
+                                localComputer[i] == "x"
+                            else
+                                sub_array[i] = "o"
+                                localComputer[j] = "o"
+                            end
+                        end
+                    end
+                end
+            end
+            localComputer = localDump
+        end
+    end
+
+    def quessToArray
+        arr = []
+        @player.code.each do |el|
+            if(el == "x")
+                arr.push("x")
+            elsif(el == "o")
+                arr.push("o")
+            end
+        end
+        arr
+    end
+
+    def generate_all_combinations
+        [1, 2, 3, 4, 5, 6].repeated_permutation(4).to_a
+    end
+
+    def initial_guess
+        arr = [[1,1,2,2],[1,1,3,3],[1,1,4,4],[1,1,5,5],[1,1,6,6],[2,2,3,3],[2,2,4,4],[2,2,5,5],[2,2,6,6],[3,3,4,4],[3,3,5,5],[3,3,6,6],[4,4,5,5],[4,4,6,6],[5,5,6,6]]
+        rand_inital_guess = arr[rand(0..arr.length-1)]
+
+        rand_inital_guess
+    end
     def code_breaker
-        guessInformation(@turn)
-        @player.code = gets.chomp
-        checkPlayerGueesCorrectness
+        code_breaker_start_instruction
         while(@turn != 13 || checkWinningArray)
             local = Marshal.load(Marshal.dump(@computer.code))
             guessInformation(@turn)
@@ -94,6 +203,8 @@ class Game
         end
         print "\n"
     end
+
+
 
     def checkPlayerGueesCorrectness
         until !!(@player.code =~ /^[1-6]{4}$/)
@@ -136,6 +247,7 @@ class Game
         if(checkWinningArray)
             @turn = 13
             puts "\nCongratulations you won!!! :)"
+
         elsif(!checkWinningArray && @turn == 13)
             gameOver(local)
         end
